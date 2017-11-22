@@ -45,7 +45,7 @@ const (
 	// pre-generated code for the Well Known Types.
 	WellKnownTypesGoPrefix = "github.com/golang/protobuf"
 
-	// GazelleImportsKey is an internal attribute that lists imported packages
+	// TazeImportsKey is an internal attribute that lists imported packages
 	// on generated rules. It is replaced with "deps" during import resolution.
-	GazelleImportsKey = "_gazelle_imports"
+	TazeImportsKey = "_taze_imports"
 )

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Bazel Authors. All rights reserved.
+/* Copyright 2016 The Bazel Authors. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,12 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package tests_import_testdata_test
+package main
 
 import (
-	"testing"
+	"io/ioutil"
 
-	_ "example.com/repo/tests_import_testdata/testdata"
+	bf "github.com/bazelbuild/buildtools/build"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
-func TestStuff(t *testing.T) {}
+func fixFile(c *config.Config, file *bf.File) error {
+	if err := ioutil.WriteFile(file.Path, bf.Format(file), 0644); err != nil {
+		return err
+	}
+	return nil
+}

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 func TestImportPath(t *testing.T) {

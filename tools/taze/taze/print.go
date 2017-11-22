@@ -13,4 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-int64_t callC();
+package main
+
+import (
+	"os"
+
+	bf "github.com/bazelbuild/buildtools/build"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
+)
+
+func printFile(c *config.Config, f *bf.File) error {
+	_, err := os.Stdout.Write(bf.Format(f))
+	return err
+}

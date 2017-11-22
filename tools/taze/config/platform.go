@@ -40,7 +40,7 @@ func (p Platform) String() string {
 	}
 }
 
-// KnownPlatforms is the set of target platforms that Go supports. Gazelle
+// KnownPlatforms is the set of target platforms that Go supports. Taze
 // will generate multi-platform build files using these tags. rules_go and
 // Bazel may not actually support all of these.
 var KnownPlatforms = []Platform{

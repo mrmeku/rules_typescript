@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	bf "github.com/bazelbuild/buildtools/build"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 // Resolver resolves import strings in source files (import paths in Go,
@@ -61,7 +61,7 @@ func NewResolver(c *config.Config, l Labeler) *Resolver {
 }
 
 // ResolveRule modifies a generated rule e by replacing the import paths in the
-// "_gazelle_imports" attribute with labels in a "deps" attribute. This may
+// "_taze_imports" attribute with labels in a "deps" attribute. This may
 // may safely called on expressions that aren't Go rules (nothing will happen).
 func (r *Resolver) ResolveRule(e bf.Expr, pkgRel, buildRel string) {
 	call, ok := e.(*bf.CallExpr)
@@ -82,7 +82,7 @@ func (r *Resolver) ResolveRule(e bf.Expr, pkgRel, buildRel string) {
 		return
 	}
 
-	imports := rule.AttrDefn(config.GazelleImportsKey)
+	imports := rule.AttrDefn(config.TazeImportsKey)
 	if imports == nil {
 		return
 	}
@@ -99,7 +99,7 @@ func (r *Resolver) ResolveRule(e bf.Expr, pkgRel, buildRel string) {
 		return label.String()
 	})
 	if deps == nil {
-		rule.DelAttr(config.GazelleImportsKey)
+		rule.DelAttr(config.TazeImportsKey)
 	} else {
 		imports.X.(*bf.LiteralExpr).Token = "deps"
 		imports.Y = deps

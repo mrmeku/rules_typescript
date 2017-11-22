@@ -23,8 +23,8 @@ import (
 
 	bf "github.com/bazelbuild/buildtools/build"
 	bt "github.com/bazelbuild/buildtools/tables"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/packages"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/packages"
 )
 
 type keyvalue struct {

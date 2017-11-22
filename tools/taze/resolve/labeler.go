@@ -19,7 +19,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 // Labeler generates Bazel labels for rules, based on their locations

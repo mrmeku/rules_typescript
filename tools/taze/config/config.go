@@ -20,10 +20,10 @@ import (
 	"strings"
 )
 
-// Config holds information about how Gazelle should run. This is mostly
+// Config holds information about how Taze should run. This is mostly
 // based on command-line arguments.
 type Config struct {
-	// Dirs is a list of absolute paths to directories where Gazelle should run.
+	// Dirs is a list of absolute paths to directories where Taze should run.
 	Dirs []string
 
 	// RepoRoot is the absolute path to the root directory of the repository.
@@ -38,7 +38,7 @@ type Config struct {
 	// It should not be nil.
 	GenericTags BuildTags
 
-	// ExperimentalPlatforms determines whether Gazelle generates separate OS-
+	// ExperimentalPlatforms determines whether Taze generates separate OS-
 	// and arch-specific select expressions for platform-specific strings.
 	// TODO(jayconrod): remove after Bazel 0.8. This will become the only mode.
 	ExperimentalPlatforms bool
@@ -47,7 +47,7 @@ type Config struct {
 	// This is used to map imports to labels within the repository.
 	GoPrefix string
 
-	// ShouldFix determines whether Gazelle attempts to remove and replace
+	// ShouldFix determines whether Taze attempts to remove and replace
 	// usage of deprecated rules.
 	ShouldFix bool
 

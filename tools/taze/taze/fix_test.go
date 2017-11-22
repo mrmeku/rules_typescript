@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	bf "github.com/bazelbuild/buildtools/build"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 func TestMain(m *testing.M) {
@@ -97,7 +97,7 @@ func TestCreateFile(t *testing.T) {
 		t.Fatalf("error writing file %q: %v", goFile, err)
 	}
 
-	// Check that Gazelle creates a new file named "BUILD.bazel".
+	// Check that Taze creates a new file named "BUILD.bazel".
 	c := defaultConfig(dir)
 	run(c, updateCmd, fixFile)
 
@@ -126,7 +126,7 @@ func TestUpdateFile(t *testing.T) {
 		t.Fatalf("error writing file %q: %v", buildFile, err)
 	}
 
-	// Check that Gazelle updates the BUILD file in place.
+	// Check that Taze updates the BUILD file in place.
 	c := defaultConfig(dir)
 	run(c, updateCmd, fixFile)
 	if st, err := os.Stat(buildFile); err != nil {

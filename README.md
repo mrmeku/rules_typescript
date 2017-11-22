@@ -91,11 +91,11 @@ outputs from TypeScript will be written to disk, next to the `.d.ts` files <sup>
 If you'd like a "watch mode", try https://github.com/bazelbuild/bazel-watcher
 (note, it's also quite new).
 
-At some point, we plan to release a tool similar to [gazelle] to generate the
+At some point, we plan to release a tool similar to [taze] to generate the
 BUILD files from your source code.
 
 In the meantime, we suggest associating the `.bazel` extension with Python in
 your editor, so that you get useful syntax highlighting.
 
-[gazelle]: https://github.com/bazelbuild/rules_go/tree/master/go/tools/gazelle
+[taze]: https://github.com/bazelbuild/rules_go/tree/master/go/tools/taze
 

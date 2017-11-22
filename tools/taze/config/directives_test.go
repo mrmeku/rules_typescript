@@ -33,11 +33,11 @@ func TestParseDirectives(t *testing.T) {
 			desc: "locations",
 			content: `# gazelle:ignore top
 
-#gazelle:ignore before
+#taze:ignore before
 foo(
    "foo",  # gazelle:ignore inside
 ) # gazelle:ignore suffix
-#gazelle:ignore after
+#taze:ignore after
 
 # gazelle:ignore bottom`,
 			want: []Directive{

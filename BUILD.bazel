@@ -13,15 +13,15 @@
 # limitations under the License.
 
 # To update BUILD.bazel files after changing Go code, run
-# bazel run //:gazelle
+# bazel run //:taze
 #
 # Exclude node_modules, see
-# https://github.com/bazelbuild/rules_go/blob/master/go/tools/gazelle/README.rst#directives
-# gazelle:exclude node_modules
-load("@io_bazel_rules_go//go:def.bzl", "gazelle")
+# https://github.com/bazelbuild/rules_go/blob/master/go/tools/taze/README.rst#directives
+# taze:exclude node_modules
+load("@io_bazel_rules_go//go:def.bzl", "taze")
 
-gazelle(
-    name = "gazelle",
+taze(
+    name = "taze",
     prefix = "github.com/bazelbuild/rules_typescript",
 )
 

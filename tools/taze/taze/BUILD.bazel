@@ -10,19 +10,19 @@ go_library(
         "print.go",
     ],
     deps = [
-        "//go/tools/gazelle/config:go_default_library",
-        "//go/tools/gazelle/merger:go_default_library",
-        "//go/tools/gazelle/packages:go_default_library",
-        "//go/tools/gazelle/resolve:go_default_library",
-        "//go/tools/gazelle/rules:go_default_library",
-        "//go/tools/gazelle/wspace:go_default_library",
+        "//go/tools/taze/config:go_default_library",
+        "//go/tools/taze/merger:go_default_library",
+        "//go/tools/taze/packages:go_default_library",
+        "//go/tools/taze/resolve:go_default_library",
+        "//go/tools/taze/rules:go_default_library",
+        "//go/tools/taze/wspace:go_default_library",
         "@com_github_bazelbuild_buildtools//build:go_default_library",
         "@com_github_bazelbuild_buildtools//differ:go_default_library",
     ],
 )
 
 go_binary(
-    name = "gazelle",
+    name = "taze",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )

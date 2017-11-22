@@ -22,11 +22,11 @@ import (
 	"testing"
 
 	bf "github.com/bazelbuild/buildtools/build"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/merger"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/packages"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/resolve"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/rules"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/merger"
+	"github.com/bazelbuild/rules_typescript/tools/taze/packages"
+	"github.com/bazelbuild/rules_typescript/tools/taze/resolve"
+	"github.com/bazelbuild/rules_typescript/tools/taze/rules"
 )
 
 func testConfig(repoRoot, goPrefix string) *config.Config {

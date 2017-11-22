@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Command gazelle is a BUILD file generator for Go projects.
-// See "gazelle --help" for more details.
+// Command taze is a BUILD file generator for Go projects.
+// See "taze --help" for more details.
 package main
 
 import (
@@ -30,12 +30,12 @@ import (
 	"strings"
 
 	bf "github.com/bazelbuild/buildtools/build"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/merger"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/packages"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/resolve"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/rules"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/wspace"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/merger"
+	"github.com/bazelbuild/rules_typescript/tools/taze/packages"
+	"github.com/bazelbuild/rules_typescript/tools/taze/resolve"
+	"github.com/bazelbuild/rules_typescript/tools/taze/rules"
+	"github.com/bazelbuild/rules_typescript/tools/taze/wspace"
 )
 
 type emitFunc func(*config.Config, *bf.File) error
@@ -104,7 +104,7 @@ func run(c *config.Config, cmd command, emit emitFunc) {
 				} else {
 					fixedFile := merger.FixFile(c, oldFile)
 					if fixedFile != oldFile {
-						log.Printf("%s: warning: file contains rules whose structure is out of date. Consider running 'gazelle fix'.", oldFile.Path)
+						log.Printf("%s: warning: file contains rules whose structure is out of date. Consider running 'taze fix'.", oldFile.Path)
 					}
 				}
 			}
@@ -196,7 +196,7 @@ func mergeAndEmit(c *config.Config, genFile, oldFile *bf.File, empty []bf.Expr, 
 	} else {
 		fixedFile := merger.FixFile(c, oldFile)
 		if fixedFile != oldFile {
-			log.Printf("%s: warning: file contains rules whose structure is out of date. Consider running 'gazelle fix'.", oldFile.Path)
+			log.Printf("%s: warning: file contains rules whose structure is out of date. Consider running 'taze fix'.", oldFile.Path)
 		}
 	}
 
@@ -217,36 +217,36 @@ func mergeAndEmit(c *config.Config, genFile, oldFile *bf.File, empty []bf.Expr, 
 }
 
 func usage(fs *flag.FlagSet) {
-	fmt.Fprintln(os.Stderr, `usage: gazelle <command> [flags...] [package-dirs...]
+	fmt.Fprintln(os.Stderr, `usage: taze <command> [flags...] [package-dirs...]
 
-Gazelle is a BUILD file generator for Go projects. It can create new BUILD files
+Taze is a BUILD file generator for Go projects. It can create new BUILD files
 for a project that follows "go build" conventions, and it can update BUILD files
 if they already exist. It can be invoked directly in a project workspace, or
 it can be run on an external dependency during the build as part of the
 go_repository rule.
 
-Gazelle may be run with one of the commands below. If no command is given,
-Gazelle defaults to "update".
+Taze may be run with one of the commands below. If no command is given,
+Taze defaults to "update".
 
-  update - Gazelle will create new BUILD files or update existing BUILD files
+  update - Taze will create new BUILD files or update existing BUILD files
       if needed.
-	fix - in addition to the changes made in update, Gazelle will make potentially
+	fix - in addition to the changes made in update, Taze will make potentially
 	    breaking changes. For example, it may delete obsolete rules or rename
       existing rules.
 
-Gazelle has several output modes which can be selected with the -mode flag. The
-output mode determines what Gazelle does with updated BUILD files.
+Taze has several output modes which can be selected with the -mode flag. The
+output mode determines what Taze does with updated BUILD files.
 
   fix (default) - write updated BUILD files back to disk.
   print - print updated BUILD files to stdout.
   diff - diff updated BUILD files against existing files in unified format.
 
-Gazelle accepts a list of paths to Go package directories to process (defaults
+Taze accepts a list of paths to Go package directories to process (defaults
 to . if none given). It recursively traverses subdirectories. All directories
 must be under the directory specified by -repo_root; if -repo_root is not given,
 this is the directory containing the WORKSPACE file.
 
-Gazelle is under active delevopment, and its interface may change
+Taze is under active delevopment, and its interface may change
 without notice.
 
 FLAGS:
@@ -255,7 +255,7 @@ FLAGS:
 }
 
 func main() {
-	log.SetPrefix("gazelle: ")
+	log.SetPrefix("taze: ")
 	log.SetFlags(0) // don't print timestamps
 
 	c, cmd, emit, err := newConfiguration(os.Args[1:])
@@ -275,21 +275,21 @@ func newConfiguration(args []string) (*config.Config, command, emitFunc, error) 
 		}
 	}
 
-	fs := flag.NewFlagSet("gazelle", flag.ContinueOnError)
+	fs := flag.NewFlagSet("taze", flag.ContinueOnError)
 	// Flag will call this on any parse error. Don't print usage unless
 	// -h or -help were passed explicitly.
 	fs.Usage = func() {}
 
 	knownImports := multiFlag{}
 	buildFileName := fs.String("build_file_name", "BUILD.bazel,BUILD", "comma-separated list of valid build file names.\nThe first element of the list is the name of output build files to generate.")
-	buildTags := fs.String("build_tags", "", "comma-separated list of build tags. If not specified, Gazelle will not\n\tfilter sources with build constraints.")
+	buildTags := fs.String("build_tags", "", "comma-separated list of build tags. If not specified, Taze will not\n\tfilter sources with build constraints.")
 	external := fs.String("external", "external", "external: resolve external packages with go_repository\n\tvendored: resolve external packages as packages in vendor/")
 	var goPrefix explicitFlag
 	fs.Var(&goPrefix, "go_prefix", "prefix of import paths in the current workspace")
-	repoRoot := fs.String("repo_root", "", "path to a directory which corresponds to go_prefix, otherwise gazelle searches for it.")
+	repoRoot := fs.String("repo_root", "", "path to a directory which corresponds to go_prefix, otherwise taze searches for it.")
 	fs.Var(&knownImports, "known_import", "import path for which external resolution is skipped (can specify multiple times)")
 	mode := fs.String("mode", "fix", "print: prints all of the updated BUILD files\n\tfix: rewrites all of the BUILD files in place\n\tdiff: computes the rewrite but then just does a diff")
-	flat := fs.Bool("experimental_flat", false, "whether gazelle should generate a single, combined BUILD file.\nThis mode is experimental and may not work yet.")
+	flat := fs.Bool("experimental_flat", false, "whether taze should generate a single, combined BUILD file.\nThis mode is experimental and may not work yet.")
 	proto := fs.String("proto", "default", "default: generates new proto rules\n\tdisable: does not touch proto rules\n\tlegacy (deprecated): generates old proto rules")
 	experimentalPlatforms := fs.Bool("experimental_platforms", false, "generates separate select expressions for OS and arch-specific srcs and deps (won't work until Bazel 0.8)")
 	if err := fs.Parse(args); err != nil {

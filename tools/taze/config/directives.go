@@ -47,7 +47,7 @@ var knownTopLevelDirectives = map[string]bool{
 // TODO(jayconrod): annotation directives will apply to an individual rule.
 // They must appear in the block of comments above that rule.
 
-// ParseDirectives scans f for Gazelle directives. The full list of directives
+// ParseDirectives scans f for Taze directives. The full list of directives
 // is returned. Errors are reported for unrecognized directives and directives
 // out of place (after the first statement).
 func ParseDirectives(f *bf.File) []Directive {
@@ -87,7 +87,7 @@ func ParseDirectives(f *bf.File) []Directive {
 	return directives
 }
 
-var directiveRe = regexp.MustCompile(`^#\s*gazelle:(\w+)\s*(.*?)\s*$`)
+var directiveRe = regexp.MustCompile(`^#\s*taze:(\w+)\s*(.*?)\s*$`)
 
 // ApplyDirectives applies directives that modify the configuration to a
 // copy of c, which is returned. If there are no configuration directives,

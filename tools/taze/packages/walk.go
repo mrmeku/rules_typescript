@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	bf "github.com/bazelbuild/buildtools/build"
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 // A WalkFunc is a callback called by Walk in each visited directory.
@@ -38,17 +38,17 @@ import (
 //
 // pkg contains information about how to build source code in the directory.
 // Will be nil for directories that don't contain buildable code, directories
-// that Gazelle was not asked update, and directories where Walk
+// that Taze was not asked update, and directories where Walk
 // encountered errors.
 //
 // oldFile is the existing build file in the directory. Will be nil if there
 // was no file.
 //
-// isUpdateDir is true for directories that Gazelle was asked to update.
+// isUpdateDir is true for directories that Taze was asked to update.
 type WalkFunc func(rel string, c *config.Config, pkg *Package, oldFile *bf.File, isUpdateDir bool)
 
 // Walk traverses a directory tree. In each directory, Walk parses existing
-// build files. In directories that Gazelle was asked to update (c.Dirs), Walk
+// build files. In directories that Taze was asked to update (c.Dirs), Walk
 // also parses source files and infers build information.
 //
 // c is the base configuration for the repository. c may be copied and modified

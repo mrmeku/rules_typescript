@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// This file contains integration tests for all of Gazelle. It's meant to test
+// This file contains integration tests for all of Taze. It's meant to test
 // common usage patterns and check for errors that are difficult to test in
 // unit tests.
 
@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bazelbuild/rules_go/go/tools/gazelle/config"
+	"github.com/bazelbuild/rules_typescript/tools/taze/config"
 )
 
 type fileSpec struct {
@@ -88,7 +88,7 @@ func checkFiles(t *testing.T, dir string, files []fileSpec) {
 	}
 }
 
-func runGazelle(wd string, args []string) error {
+func runTaze(wd string, args []string) error {
 	oldWd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func TestNoRepoRootOrWorkspace(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "-repo_root not specified"
-	if err := runGazelle(dir, nil); err == nil {
+	if err := runTaze(dir, nil); err == nil {
 		t.Fatalf("got success; want %q", want)
 	} else if !strings.Contains(err.Error(), want) {
 		t.Fatalf("got %q; want %q", err, want)
@@ -128,7 +128,7 @@ func TestNoGoPrefixArgOrRule(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "-go_prefix not set"
-	if err := runGazelle(dir, nil); err == nil {
+	if err := runTaze(dir, nil); err == nil {
 		t.Fatalf("got success; want %q", want)
 	} else if !strings.Contains(err.Error(), want) {
 		t.Fatalf("got %q; want %q", err, want)
@@ -216,7 +216,7 @@ go_library(
 		t.Fatal(err)
 	}
 
-	if err := runGazelle(dir, []string{"-go_prefix", "example.com/foo", "-experimental_platforms"}); err != nil {
+	if err := runTaze(dir, []string{"-go_prefix", "example.com/foo", "-experimental_platforms"}); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := ioutil.ReadFile(filepath.Join(dir, "BUILD")); err != nil {
@@ -317,7 +317,7 @@ go_library(
 				t.Fatal(err)
 			}
 
-			if err := runGazelle(dir, []string{c.cmd}); err != nil {
+			if err := runTaze(dir, []string{c.cmd}); err != nil {
 				t.Fatal(err)
 			}
 			if got, err := ioutil.ReadFile(filepath.Join(dir, "BUILD")); err != nil {
@@ -368,7 +368,7 @@ go_library(
     visibility = ["//visibility:public"],
 )
 `
-	if err := runGazelle(dir, []string{"fix", "-go_prefix", "example.com/foo"}); err != nil {
+	if err := runTaze(dir, []string{"fix", "-go_prefix", "example.com/foo"}); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := ioutil.ReadFile(filepath.Join(dir, "BUILD")); err != nil {
@@ -396,7 +396,7 @@ func TestMultipleDirectories(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", "example.com/foo", "a", "b"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 	for _, d := range []string{"a", "b"} {
@@ -436,7 +436,7 @@ func TestErrorOutsideWorkspace(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if err := runGazelle(c.dir, c.args); err == nil {
+			if err := runTaze(c.dir, c.args); err == nil {
 				t.Fatal("got success; want %q", c.want)
 			} else if !strings.Contains(err.Error(), c.want) {
 				t.Fatal("got %q; want %q", err, c.want)
@@ -464,7 +464,7 @@ func TestBuildFileNameIgnoresBuild(t *testing.T) {
 	defer os.Remove(dir)
 
 	args := []string{"-go_prefix", "example.com/foo", "-build_file_name", "BUILD.bazel"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "BUILD.bazel")); err != nil {
@@ -499,7 +499,7 @@ import _ "golang.org/x/baz"
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", "example.com/foo", "-external", "vendored"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
@@ -537,10 +537,10 @@ func TestFlatExternal(t *testing.T) {
 		{path: "WORKSPACE"},
 		{
 			path: "BUILD.bazel",
-			content: `load("@io_bazel_rules_go//go:def.bzl", "gazelle")
+			content: `load("@io_bazel_rules_go//go:def.bzl", "taze")
 
-gazelle(
-    name = "gazelle",
+taze(
+    name = "taze",
     prefix = "example.com/foo",
     args = ["-experimental_flat"],
 )
@@ -585,17 +585,17 @@ import (
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", "example.com/foo", "-experimental_flat"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
 	checkFiles(t, dir, []fileSpec{
 		{
 			path: config.DefaultValidBuildFileNames[0],
-			content: `load("@io_bazel_rules_go//go:def.bzl", "gazelle", "go_binary", "go_library", "go_test")
+			content: `load("@io_bazel_rules_go//go:def.bzl", "taze", "go_binary", "go_library", "go_test")
 
-gazelle(
-    name = "gazelle",
+taze(
+    name = "taze",
     args = ["-experimental_flat"],
     prefix = "example.com/foo",
 )
@@ -668,10 +668,10 @@ func TestFlatVendored(t *testing.T) {
 		{path: "WORKSPACE"},
 		{
 			path: "BUILD.bazel",
-			content: `load("@io_bazel_rules_go//go:def.bzl", "gazelle")
+			content: `load("@io_bazel_rules_go//go:def.bzl", "taze")
 
-gazelle(
-    name = "gazelle",
+taze(
+    name = "taze",
     args = ["-experimental_flat"],
     external = "vendored",
     prefix = "example.com/foo",
@@ -704,17 +704,17 @@ import _ "github.com/jr_hacker/stuff/a/b"
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", "example.com/foo", "-experimental_flat", "-external", "vendored"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
 	checkFiles(t, dir, []fileSpec{
 		{
 			path: config.DefaultValidBuildFileNames[0],
-			content: `load("@io_bazel_rules_go//go:def.bzl", "gazelle", "go_library")
+			content: `load("@io_bazel_rules_go//go:def.bzl", "taze", "go_library")
 
-gazelle(
-    name = "gazelle",
+taze(
+    name = "taze",
     args = ["-experimental_flat"],
     external = "vendored",
     prefix = "example.com/foo",
@@ -844,7 +844,7 @@ go_library(
 			}
 			defer os.RemoveAll(dir)
 
-			if err := runGazelle(dir, tc.args); err != nil {
+			if err := runTaze(dir, tc.args); err != nil {
 				t.Fatal(err)
 			}
 
@@ -904,7 +904,7 @@ go_library(
 	defer os.RemoveAll(dir)
 
 	args := []string{"fix", "-go_prefix", "example.com/repo"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
@@ -970,7 +970,7 @@ service {}
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", "example.com/repo"}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1029,7 +1029,7 @@ import (
 	defer os.RemoveAll(dir)
 
 	args := []string{"-go_prefix", ""}
-	if err := runGazelle(dir, args); err != nil {
+	if err := runTaze(dir, args); err != nil {
 		t.Fatal(err)
 	}
 
