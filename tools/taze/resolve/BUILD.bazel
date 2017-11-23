@@ -13,7 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_bazelbuild_buildtools//build:go_default_library",
-        "@io_bazel_rules_typescript//tools/taze/config:go_default_library",
+        "@build_bazel_rules_typescript//tools/taze/config:go_default_library",
         "@org_golang_x_tools//go/vcs:go_default_library",
     ],
 )
@@ -28,7 +28,7 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = [
-        "@io_bazel_rules_typescript//tools/taze/config:go_default_library",
+        "@build_bazel_rules_typescript//tools/taze/config:go_default_library",
         "@org_golang_x_tools//go/vcs:go_default_library",
     ],
 )
@@ -40,6 +40,6 @@ genrule(
     name = "std_package_list",
     srcs = ["@go_sdk//:packages.txt"],
     outs = ["std_package_list.go"],
-    cmd = "$(location //go/tools/taze/resolve/internal/gen_std_package_list) $< $@",
-    tools = ["//go/tools/taze/resolve/internal/gen_std_package_list"],
+    cmd = "$(location //tools/taze/resolve/internal/gen_std_package_list) $< $@",
+    tools = ["//tools/taze/resolve/internal/gen_std_package_list"],
 )

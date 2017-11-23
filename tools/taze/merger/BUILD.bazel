@@ -9,7 +9,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_bazelbuild_buildtools//build:go_default_library",
-        "@io_bazel_rules_typescript//tools/taze/config:go_default_library",
+        "@build_bazel_rules_typescript//tools/taze/config:go_default_library",
     ],
 )
 
@@ -23,6 +23,6 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "@com_github_bazelbuild_buildtools//build:go_default_library",
-        "@io_bazel_rules_typescript//tools/taze/config:go_default_library",
+        "@build_bazel_rules_typescript//tools/taze/config:go_default_library",
     ],
 )

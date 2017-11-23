@@ -12,7 +12,7 @@ go_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//go/tools/taze/config:go_default_library",
+        "//tools/taze/config:go_default_library",
         "@com_github_bazelbuild_buildtools//build:go_default_library",
     ],
 )
@@ -35,7 +35,7 @@ go_test(
     srcs = ["walk_test.go"],
     deps = [
         ":go_default_library",
-        "//go/tools/taze/config:go_default_library",
+        "//tools/taze/config:go_default_library",
         "@com_github_bazelbuild_buildtools//build:go_default_library",
     ],
 )
