@@ -18,15 +18,12 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
-	"go/build"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	bf "github.com/bazelbuild/buildtools/build"
@@ -116,11 +113,7 @@ func run(c *config.Config, cmd command, emit emitFunc) {
 			// Generate rules.
 			if pkg != nil {
 				var buildRel string
-				if c.StructureMode == config.FlatMode {
-					buildRel = ""
-				} else {
-					buildRel = rel
-				}
+				buildRel = rel
 				g := rules.NewGenerator(c, l, buildRel, oldFile)
 				rules, empty := g.GenerateRules(pkg)
 				visits = append(visits, visitRecord{
@@ -151,21 +144,6 @@ func run(c *config.Config, cmd command, emit emitFunc) {
 				}
 				mergeAndEmit(c, genFile, v.oldFile, v.empty, emit)
 			}
-
-		case config.FlatMode:
-			sort.Stable(byPkgRel(visits))
-			var oldFile *bf.File
-			if len(visits) > 0 && visits[0].pkgRel == "" {
-				oldFile = visits[0].oldFile
-			}
-
-			genFile := &bf.File{Path: filepath.Join(c.RepoRoot, c.DefaultBuildFileName())}
-			var empty []bf.Expr
-			for _, v := range visits {
-				genFile.Stmt = append(genFile.Stmt, v.rules...)
-				empty = append(empty, v.empty...)
-			}
-			mergeAndEmit(c, genFile, oldFile, empty, emit)
 
 		default:
 			log.Panicf("unsupported structure mode: %v", c.StructureMode)
@@ -219,11 +197,10 @@ func mergeAndEmit(c *config.Config, genFile, oldFile *bf.File, empty []bf.Expr, 
 func usage(fs *flag.FlagSet) {
 	fmt.Fprintln(os.Stderr, `usage: taze <command> [flags...] [package-dirs...]
 
-Taze is a BUILD file generator for Go projects. It can create new BUILD files
-for a project that follows "go build" conventions, and it can update BUILD files
+Taze is a BUILD file generator for TypeScript projects. It can create new BUILD
+files for a project which uses ES6 module loading, and it can update BUILD files
 if they already exist. It can be invoked directly in a project workspace, or
-it can be run on an external dependency during the build as part of the
-go_repository rule.
+it can be run on an external dependency via installing using npm.
 
 Taze may be run with one of the commands below. If no command is given,
 Taze defaults to "update".
@@ -241,10 +218,10 @@ output mode determines what Taze does with updated BUILD files.
   print - print updated BUILD files to stdout.
   diff - diff updated BUILD files against existing files in unified format.
 
-Taze accepts a list of paths to Go package directories to process (defaults
-to . if none given). It recursively traverses subdirectories. All directories
-must be under the directory specified by -repo_root; if -repo_root is not given,
-this is the directory containing the WORKSPACE file.
+Taze accepts a list of paths to TypeScript package directories to process 
+(defaults to . if none given). It recursively traverses subdirectories. All 
+directories must be under the directory specified by -repo_root; if -repo_root
+is not given, this is the directory containing the WORKSPACE file.
 
 Taze is under active delevopment, and its interface may change
 without notice.
@@ -283,15 +260,9 @@ func newConfiguration(args []string) (*config.Config, command, emitFunc, error) 
 	knownImports := multiFlag{}
 	buildFileName := fs.String("build_file_name", "BUILD.bazel,BUILD", "comma-separated list of valid build file names.\nThe first element of the list is the name of output build files to generate.")
 	buildTags := fs.String("build_tags", "", "comma-separated list of build tags. If not specified, Taze will not\n\tfilter sources with build constraints.")
-	external := fs.String("external", "external", "external: resolve external packages with go_repository\n\tvendored: resolve external packages as packages in vendor/")
-	var goPrefix explicitFlag
-	fs.Var(&goPrefix, "go_prefix", "prefix of import paths in the current workspace")
-	repoRoot := fs.String("repo_root", "", "path to a directory which corresponds to go_prefix, otherwise taze searches for it.")
+	repoRoot := fs.String("repo_root", "", "path to a directory which contains tsconfig, otherwise taze searches for it.")
 	fs.Var(&knownImports, "known_import", "import path for which external resolution is skipped (can specify multiple times)")
 	mode := fs.String("mode", "fix", "print: prints all of the updated BUILD files\n\tfix: rewrites all of the BUILD files in place\n\tdiff: computes the rewrite but then just does a diff")
-	flat := fs.Bool("experimental_flat", false, "whether taze should generate a single, combined BUILD file.\nThis mode is experimental and may not work yet.")
-	proto := fs.String("proto", "default", "default: generates new proto rules\n\tdisable: does not touch proto rules\n\tlegacy (deprecated): generates old proto rules")
-	experimentalPlatforms := fs.Bool("experimental_platforms", false, "generates separate select expressions for OS and arch-specific srcs and deps (won't work until Bazel 0.8)")
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			usage(fs)
@@ -347,36 +318,9 @@ func newConfiguration(args []string) (*config.Config, command, emitFunc, error) 
 	c.SetBuildTags(*buildTags)
 	c.PreprocessTags()
 
-	if goPrefix.set {
-		c.GoPrefix = goPrefix.value
-	} else {
-		c.GoPrefix, err = loadGoPrefix(&c)
-		if err != nil {
-			return nil, cmd, nil, fmt.Errorf("-go_prefix not set")
-		}
-		// TODO(jayconrod): read prefix directives when they are supported.
-	}
-	if strings.HasPrefix(c.GoPrefix, "/") || build.IsLocalImport(c.GoPrefix) {
-		return nil, cmd, nil, fmt.Errorf("invalid go_prefix: %q", c.GoPrefix)
-	}
-
 	c.ShouldFix = cmd == fixCmd
 
-	c.DepMode, err = config.DependencyModeFromString(*external)
-	if err != nil {
-		return nil, cmd, nil, err
-	}
-
-	if *flat {
-		c.StructureMode = config.FlatMode
-	} else {
-		c.StructureMode = config.HierarchicalMode
-	}
-
-	c.ProtoMode, err = config.ProtoModeFromString(*proto)
-	if err != nil {
-		return nil, cmd, nil, err
-	}
+	c.StructureMode = config.HierarchicalMode
 
 	emit, ok := modeFromName[*mode]
 	if !ok {
@@ -384,8 +328,6 @@ func newConfiguration(args []string) (*config.Config, command, emitFunc, error) 
 	}
 
 	c.KnownImports = append(c.KnownImports, knownImports...)
-
-	c.ExperimentalPlatforms = *experimentalPlatforms
 
 	return &c, cmd, emit, err
 }
@@ -433,35 +375,6 @@ func loadBuildFile(c *config.Config, dir string) (*bf.File, error) {
 		return nil, err
 	}
 	return bf.Parse(buildPath, data)
-}
-
-func loadGoPrefix(c *config.Config) (string, error) {
-	f, err := loadBuildFile(c, c.RepoRoot)
-	if err != nil {
-		return "", err
-	}
-	for _, s := range f.Stmt {
-		c, ok := s.(*bf.CallExpr)
-		if !ok {
-			continue
-		}
-		l, ok := c.X.(*bf.LiteralExpr)
-		if !ok {
-			continue
-		}
-		if l.Token != "go_prefix" {
-			continue
-		}
-		if len(c.List) != 1 {
-			return "", fmt.Errorf("found go_prefix(%v) with too many args", c.List)
-		}
-		v, ok := c.List[0].(*bf.StringExpr)
-		if !ok {
-			return "", fmt.Errorf("found go_prefix(%v) which is not a string", c.List)
-		}
-		return v.Value, nil
-	}
-	return "", errors.New("-go_prefix not set, and no go_prefix in root BUILD file")
 }
 
 func isDescendingDir(dir, root string) bool {
