@@ -127,8 +127,8 @@ func ApplyDirectives(c *Config, directives []Directive) *Config {
 // InferProtoMode sets Config.ProtoMode, based on the contents of f.  If the
 // proto mode is already set to something other than the default, or if the mode
 // is set explicitly in directives, this function does not change it. If the
-// legacy go_proto_library.bzl is loaded, or if this is the Well Known Types
-// repository, legacy mode is used. If go_proto_library is loaded from another
+// legacy go_proto_library.bzl is imported, or if this is the Well Known Types
+// repository, legacy mode is used. If go_proto_library is imported from another
 // file, proto rule generation is disabled.
 func InferProtoMode(c *Config, f *bf.File, directives []Directive) *Config {
 	if c.ProtoMode != DefaultProtoMode {

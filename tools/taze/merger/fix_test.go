@@ -260,7 +260,7 @@ go_test(
 	}
 }
 
-func TestFixLoads(t *testing.T) {
+func TestFixImports(t *testing.T) {
 	for _, tc := range []fixTestCase{
 		{
 			desc: "empty file",
@@ -288,7 +288,7 @@ intercal_library(
 `,
 			want: "",
 		}, {
-			desc: "add and remove loaded symbols",
+			desc: "add and remove imported symbols",
 			old: `load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(name = "go_default_library")
@@ -302,7 +302,7 @@ go_library(name = "go_default_library")
 go_binary(name = "cmd")
 `,
 		}, {
-			desc: "consolidate load statements",
+			desc: "consolidate import statements",
 			old: `load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_test")
@@ -318,7 +318,7 @@ go_library(name = "go_default_library")
 go_test(name = "go_default_test")
 `,
 		}, {
-			desc: "new load statement",
+			desc: "new import statement",
 			old: `go_library(
     name = "go_default_library",
 )
@@ -358,7 +358,7 @@ go_grpc_library(
 )
 `,
 		}, {
-			desc: "fixLoad doesn't touch other symbols or loads",
+			desc: "fixImport doesn't touch other symbols or imports",
 			old: `load(
     "@io_bazel_rules_go//go:def.bzl",
     "go_embed_data",  # embed
@@ -384,7 +384,7 @@ go_library(
 )
 `,
 		}, {
-			desc: "fixLoad doesn't touch loads from other files",
+			desc: "fixImport doesn't touch imports from other files",
 			old: `load(
     "@com_github_pubref_rules_protobuf//go:rules.bzl",
     "go_proto_library",
@@ -416,7 +416,7 @@ grpc_proto_library(
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			testFix(t, tc, FixLoads)
+			testFix(t, tc, FixImports)
 		})
 	}
 }

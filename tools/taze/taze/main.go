@@ -159,7 +159,7 @@ func mergeAndEmit(c *config.Config, genFile, oldFile *bf.File, empty []bf.Expr, 
 	if oldFile == nil {
 		// No existing file, so no merge required.
 		rules.SortLabels(genFile)
-		genFile = merger.FixLoads(genFile)
+		genFile = merger.FixImports(genFile)
 		bf.Rewrite(genFile, nil) // have buildifier 'format' our rules.
 		if err := emit(c, genFile); err != nil {
 			log.Print(err)
@@ -186,7 +186,7 @@ func mergeAndEmit(c *config.Config, genFile, oldFile *bf.File, empty []bf.Expr, 
 	}
 
 	rules.SortLabels(mergedFile)
-	mergedFile = merger.FixLoads(mergedFile)
+	mergedFile = merger.FixImports(mergedFile)
 	bf.Rewrite(mergedFile, nil) // have buildifier 'format' our rules.
 	if err := emit(c, mergedFile); err != nil {
 		log.Print(err)

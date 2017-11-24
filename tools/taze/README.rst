@@ -228,10 +228,10 @@ Taze supports several directives, written as comments in build files.
   * ``legacy``: ``filegroup`` rules are generated for use by
     ``@io_bazel_rules_go//proto:go_proto_library.bzl``. ``go_proto_library``
     rules must be written by hand. Taze will run in this mode automatically
-    if ``go_proto_library.bzl`` is loaded to avoid disrupting existing
+    if ``go_proto_library.bzl`` is imported to avoid disrupting existing
     projects, but this can be overridden with a directive.
   * ``disable``: .proto files are ignored. Taze will run in this mode
-    automatically if ``go_proto_library`` is loaded from any other source,
+    automatically if ``go_proto_library`` is imported from any other source,
     but this can be overridden with a directive.
 * ``# keep``: may be written before a rule to prevent the rule from being
   updated or after a source file, dependency, or flag to prevent it from being
@@ -302,7 +302,7 @@ be removed.
   )
 
 **Remove legacy protos**: Taze will remove usage of ``go_proto_library``
-rules loaded from ``@io_bazel_rules_go//proto:go_proto_library.bzl`` and
+rules imported from ``@io_bazel_rules_go//proto:go_proto_library.bzl`` and
 ``filegroup`` rules named ``go_default_library_protos``. Newly generated
 proto rules will take their place. Since ``filegroup`` isn't needed anymore
 and ``go_proto_library`` has different attributes and was always written by
@@ -310,7 +310,7 @@ hand, Taze will not attempt to merge anything from these rules with the
 newly generated rules.
 
 This transformation is only applied in the default proto mode. Since Taze
-will run in legacy proto mode if ``go_proto_library.bzl`` is loaded, this
+will run in legacy proto mode if ``go_proto_library.bzl`` is imported, this
 transformation is not usually applied. You can set the proto mode explicitly
 using the directive ``# gazelle:proto default``.
 
