@@ -24,13 +24,13 @@ import (
 	"golang.org/x/tools/go/vcs"
 )
 
-// externalResolver resolves import paths to external repositories. It uses
+// nodeModuleResolver resolves import paths to external repositories. It uses
 // vcs to determine the prefix of the import path that corresponds to the root
 // of the repository (this will perform a network fetch for unqualified paths).
 // The prefix is converted to a Bazel external name repo according to the
 // guidelines in http://bazel.io/docs/be/functions.html#workspace. The remaining
 // portion of the import path is treated as the package name.
-type externalResolver struct {
+type nodeModuleResolver struct {
 	l Labeler
 
 	// repoRootForImportPath is vcs.RepoRootForImportPath by default. It may
@@ -42,9 +42,9 @@ type externalResolver struct {
 	cache map[string]repoRootCacheEntry
 }
 
-var _ nonlocalResolver = (*externalResolver)(nil)
+var _ nonlocalResolver = (*nodeModuleResolver)(nil)
 
-func newExternalResolver(l Labeler, extraKnownImports []string) *externalResolver {
+func newNodeModuleResolver(l Labeler, extraKnownImports []string) *nodeModuleResolver {
 	cache := make(map[string]repoRootCacheEntry)
 	for _, e := range []repoRootCacheEntry{
 		{prefix: "golang.org/x", missing: 1},
@@ -59,7 +59,7 @@ func newExternalResolver(l Labeler, extraKnownImports []string) *externalResolve
 		cache[e] = repoRootCacheEntry{prefix: e, missing: 0}
 	}
 
-	return &externalResolver{
+	return &nodeModuleResolver{
 		l:     l,
 		cache: cache,
 		repoRootForImportPath: vcs.RepoRootForImportPath,
@@ -70,7 +70,7 @@ func newExternalResolver(l Labeler, extraKnownImports []string) *externalResolve
 // external repository. It also assumes that the external repository follows the
 // recommended reverse-DNS form of workspace name as described in
 // http://bazel.io/docs/be/functions.html#workspace.
-func (r *externalResolver) resolve(importpath string) (Label, error) {
+func (r *nodeModuleResolver) resolve(importpath string) (Label, error) {
 	prefix, err := r.lookupPrefix(importpath)
 	if err != nil {
 		return Label{}, err
@@ -90,7 +90,7 @@ var gopkginPattern = regexp.MustCompile("^(gopkg.in/(?:[^/]+/)?[^/]+\\.v\\d+)(?:
 
 // lookupPrefix determines the prefix of "importpath" that corresponds to
 // the root of the repository. Results are cached.
-func (r *externalResolver) lookupPrefix(importpath string) (string, error) {
+func (r *nodeModuleResolver) lookupPrefix(importpath string) (string, error) {
 	// subpaths contains slices of importpath with components removed. For
 	// example:
 	//   golang.org/x/tools/go/vcs

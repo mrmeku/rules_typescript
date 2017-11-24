@@ -52,7 +52,7 @@ func TestSpecialCases(t *testing.T) {
 			wantError:  true,
 		},
 	} {
-		r := newStubExternalResolver(c.extraKnown)
+		r := newStubNodeModuleResolver(c.extraKnown)
 		if got, err := r.lookupPrefix(c.in); err != nil {
 			if !c.wantError {
 				t.Errorf("unexpected error: %v", err)
@@ -65,8 +65,8 @@ func TestSpecialCases(t *testing.T) {
 	}
 }
 
-func TestExternalResolver(t *testing.T) {
-	r := newStubExternalResolver(nil)
+func TestNodeModuleResolver(t *testing.T) {
+	r := newStubNodeModuleResolver(nil)
 	for _, spec := range []struct {
 		importpath string
 		want       Label
@@ -114,9 +114,9 @@ func TestExternalResolver(t *testing.T) {
 	}
 }
 
-func newStubExternalResolver(extraKnown []string) *externalResolver {
+func newStubNodeModuleResolver(extraKnown []string) *nodeModuleResolver {
 	l := NewLabeler(&config.Config{})
-	r := newExternalResolver(l, extraKnown)
+	r := newNodeModuleResolver(l, extraKnown)
 	r.repoRootForImportPath = stubRepoRootForImportPath
 	return r
 }

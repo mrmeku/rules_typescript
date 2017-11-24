@@ -20,7 +20,6 @@ import (
 	"go/build"
 	"log"
 	"path"
-	"strings"
 
 	bf "github.com/bazelbuild/buildtools/build"
 	"github.com/bazelbuild/rules_typescript/tools/taze/config"
@@ -48,9 +47,7 @@ func NewResolver(c *config.Config, l Labeler) *Resolver {
 	var e nonlocalResolver
 	switch c.DepMode {
 	case config.ExternalMode:
-		e = newExternalResolver(l, c.KnownImports)
-	case config.VendorMode:
-		e = newVendoredResolver(l)
+		e = newNodeModuleResolver(l, c.KnownImports)
 	}
 
 	return &Resolver{
@@ -72,12 +69,6 @@ func (r *Resolver) ResolveRule(e bf.Expr, pkgRel, buildRel string) {
 
 	var resolve func(imp, pkgRel string) (Label, error)
 	switch rule.Kind() {
-	case "go_library", "go_binary", "go_test":
-		resolve = r.resolveGo
-	case "proto_library":
-		resolve = r.resolveProto
-	case "go_proto_library", "go_grpc_library":
-		resolve = r.resolveGoProto
 	default:
 		return
 	}
@@ -205,109 +196,7 @@ func (r *Resolver) resolveGo(imp, pkgRel string) (Label, error) {
 	}
 
 	switch {
-	case IsStandard(imp):
-		return Label{}, standardImportError{imp}
-	case imp == r.c.GoPrefix:
-		return r.l.LibraryLabel(""), nil
-	case r.c.GoPrefix == "" || strings.HasPrefix(imp, r.c.GoPrefix+"/"):
-		return r.l.LibraryLabel(strings.TrimPrefix(imp, r.c.GoPrefix+"/")), nil
 	default:
 		return r.external.resolve(imp)
 	}
-}
-
-const (
-	wellKnownPrefix     = "google/protobuf/"
-	wellKnownGoProtoPkg = "ptypes"
-	descriptorPkg       = "protoc-gen-go/descriptor"
-)
-
-// resolveProto resolves an import statement in a .proto file to a label
-// for a proto_library rule.
-func (r *Resolver) resolveProto(imp, pkgRel string) (Label, error) {
-	if !strings.HasSuffix(imp, ".proto") {
-		return Label{}, fmt.Errorf("can't import non-proto: %q", imp)
-	}
-	imp = imp[:len(imp)-len(".proto")]
-
-	if isWellKnown(imp) {
-		// Well Known Type
-		name := path.Base(imp) + "_proto"
-		return Label{Repo: config.WellKnownTypesProtoRepo, Name: name}, nil
-	}
-
-	rel := path.Dir(imp)
-	if rel == "." {
-		rel = ""
-	}
-	name := relBaseName(r.c, rel)
-	return r.l.ProtoLabel(rel, name), nil
-}
-
-// resolveGoProto resolves an import statement in a .proto file to a
-// label for a go_library rule that embeds the corresponding go_proto_library.
-func (r *Resolver) resolveGoProto(imp, pkgRel string) (Label, error) {
-	if !strings.HasSuffix(imp, ".proto") {
-		return Label{}, fmt.Errorf("can't import non-proto: %q", imp)
-	}
-	imp = imp[:len(imp)-len(".proto")]
-
-	if isWellKnown(imp) {
-		// Well Known Type
-		base := path.Base(imp)
-		if base == "descriptor" {
-			switch r.c.DepMode {
-			case config.ExternalMode:
-				label := r.l.LibraryLabel(descriptorPkg)
-				if r.c.GoPrefix != config.WellKnownTypesGoPrefix {
-					label.Repo = config.WellKnownTypesGoProtoRepo
-				}
-				return label, nil
-			case config.VendorMode:
-				pkg := path.Join("vendor", config.WellKnownTypesGoPrefix, descriptorPkg)
-				label := r.l.LibraryLabel(pkg)
-				return label, nil
-			default:
-				log.Panicf("unknown external mode: %v", r.c.DepMode)
-			}
-		}
-
-		switch r.c.DepMode {
-		case config.ExternalMode:
-			pkg := path.Join(wellKnownGoProtoPkg, base)
-			label := r.l.LibraryLabel(pkg)
-			if r.c.GoPrefix != config.WellKnownTypesGoPrefix {
-				label.Repo = config.WellKnownTypesGoProtoRepo
-			}
-			return label, nil
-		case config.VendorMode:
-			pkg := path.Join("vendor", config.WellKnownTypesGoPrefix, wellKnownGoProtoPkg, base)
-			return r.l.LibraryLabel(pkg), nil
-		default:
-			log.Panicf("unknown external mode: %v", r.c.DepMode)
-		}
-	}
-
-	// Temporary hack: guess the label based on the proto file name. We assume
-	// all proto files in a directory belong to the same package, and the
-	// package name matches the directory base name. We also assume that protos
-	// in the vendor directory must refer to something else in vendor.
-	// TODO(#859): use dependency table to resolve once it exists.
-	if pkgRel == "vendor" || strings.HasPrefix(pkgRel, "vendor/") {
-		imp = path.Join("vendor", imp)
-	}
-	rel := path.Dir(imp)
-	if rel == "." {
-		rel = ""
-	}
-	return r.l.LibraryLabel(rel), nil
-}
-
-// IsStandard returns whether a package is in the standard library.
-func IsStandard(imp string) bool {
-	return stdPackages[imp]
-}
-
-func isWellKnown(imp string) bool {
-	return strings.HasPrefix(imp, wellKnownPrefix) && strings.TrimPrefix(imp, wellKnownPrefix) == path.Base(imp)
 }
