@@ -49,15 +49,7 @@ type Generator struct {
 func (g *Generator) GenerateRules(pkg *packages.Package) (rules []bf.Expr, empty []bf.Expr) {
 	var rs []bf.Expr
 
-	protoLibName, protoRules := g.generateProto(pkg)
-	rs = append(rs, protoRules...)
-
-	libName, libRule := g.generateLib(pkg, protoLibName)
-	rs = append(rs, libRule)
-
 	rs = append(rs,
-		g.generateBin(pkg, libName),
-		g.generateTest(pkg, libName, false),
 		g.generateTest(pkg, "", true))
 
 	for _, r := range rs {
@@ -68,96 +60,6 @@ func (g *Generator) GenerateRules(pkg *packages.Package) (rules []bf.Expr, empty
 		}
 	}
 	return rules, empty
-}
-
-func (g *Generator) generateProto(pkg *packages.Package) (string, []bf.Expr) {
-	if g.c.ProtoMode == config.DisableProtoMode {
-		// Don't create or delete proto rules in this mode. Any existing rules
-		// are likely hand-written.
-		return "", nil
-	}
-
-	filegroupName := config.DefaultProtosName
-	protoName := g.l.ProtoLabel(pkg.Rel, pkg.Name).Name
-	goProtoName := g.l.GoProtoLabel(pkg.Rel, pkg.Name).Name
-
-	if g.c.ProtoMode == config.LegacyProtoMode {
-		if !pkg.Proto.HasProto() {
-			return "", []bf.Expr{emptyRule("filegroup", filegroupName)}
-		}
-		return "", []bf.Expr{
-			newRule("filegroup", []keyvalue{
-				{key: "name", value: filegroupName},
-				{key: "srcs", value: g.sources(pkg.Proto.Sources, pkg.Rel)},
-				{key: "visibility", value: []string{"//visibility:public"}},
-			}),
-		}
-	}
-
-	if !pkg.Proto.HasProto() {
-		return "", []bf.Expr{
-			emptyRule("filegroup", filegroupName),
-			emptyRule("proto_library", protoName),
-			emptyRule("go_proto_library", goProtoName),
-			emptyRule("go_grpc_library", goProtoName),
-		}
-	}
-
-	var rules []bf.Expr
-	visibility := []string{checkInternalVisibility(pkg.Rel, "//visibility:public")}
-	protoAttrs := []keyvalue{
-		{"name", protoName},
-		{"srcs", g.sources(pkg.Proto.Sources, pkg.Rel)},
-		{"visibility", visibility},
-	}
-	imports := pkg.Proto.Imports
-	imports.Clean()
-	if !imports.IsEmpty() {
-		protoAttrs = append(protoAttrs, keyvalue{config.TazeImportsKey, imports})
-	}
-	rules = append(rules, newRule("proto_library", protoAttrs))
-
-	goProtoAttrs := []keyvalue{
-		{"name", goProtoName},
-		{"proto", ":" + protoName},
-		{"importpath", pkg.ImportPath(g.c.GoPrefix)},
-		{"visibility", visibility},
-	}
-	if !imports.IsEmpty() {
-		goProtoAttrs = append(goProtoAttrs, keyvalue{config.TazeImportsKey, imports})
-	}
-
-	// If a developer adds or removes services from existing protos, this
-	// will create a new rule and delete the old one, along with any custom
-	// attributes (assuming no keep comments). We can't currently merge
-	// rules unless both kind and name match.
-	if pkg.Proto.HasServices {
-		rules = append(rules,
-			newRule("go_grpc_library", goProtoAttrs),
-			emptyRule("go_proto_library", goProtoName))
-	} else {
-		rules = append(rules,
-			newRule("go_proto_library", goProtoAttrs),
-			emptyRule("go_grpc_library", goProtoName))
-	}
-
-	return goProtoName, rules
-}
-
-func (g *Generator) generateBin(pkg *packages.Package, library string) bf.Expr {
-	name := g.l.BinaryLabel(pkg.Rel).Name
-	if !pkg.IsCommand() || pkg.Binary.Sources.IsEmpty() && library == "" {
-		return emptyRule("go_binary", name)
-	}
-	visibility := checkInternalVisibility(pkg.Rel, "//visibility:public")
-	attrs := g.commonAttrs(pkg.Rel, name, visibility, pkg.Binary)
-	// TODO(jayconrod): don't add importpath if it can be inherited from library.
-	// This is blocked by bazelbuild/bazel#3575.
-	attrs = append(attrs, keyvalue{"importpath", pkg.ImportPath(g.c.GoPrefix)})
-	if library != "" {
-		attrs = append(attrs, keyvalue{"embed", []string{":" + library}})
-	}
-	return newRule("go_binary", attrs)
 }
 
 func (g *Generator) generateLib(pkg *packages.Package, goProtoName string) (string, *bf.CallExpr) {
@@ -244,15 +146,6 @@ func (g *Generator) commonAttrs(pkgRel, name, visibility string, target packages
 	if !target.Sources.IsEmpty() {
 		attrs = append(attrs, keyvalue{"srcs", g.sources(target.Sources, pkgRel)})
 	}
-	if target.Cgo {
-		attrs = append(attrs, keyvalue{"cgo", true})
-	}
-	if !target.CLinkOpts.IsEmpty() {
-		attrs = append(attrs, keyvalue{"clinkopts", g.options(target.CLinkOpts, pkgRel)})
-	}
-	if !target.COpts.IsEmpty() {
-		attrs = append(attrs, keyvalue{"copts", g.options(target.COpts, pkgRel)})
-	}
 	if g.shouldSetVisibility && visibility != "" {
 		attrs = append(attrs, keyvalue{"visibility", []string{visibility}})
 	}
@@ -293,66 +186,6 @@ func (g *Generator) buildPkgRel(pkgRel string) string {
 		log.Panicf("relative path to go package %s must start with relative path to Bazel package %s", pkgRel, g.buildRel)
 	}
 	return rel
-}
-
-var (
-	// shortOptPrefixes are strings that come at the beginning of an option
-	// argument that includes a path, e.g., -Ifoo/bar.
-	shortOptPrefixes = []string{"-I", "-L", "-F"}
-
-	// longOptPrefixes are separate arguments that come before a path argument,
-	// e.g., -iquote foo/bar.
-	longOptPrefixes = []string{"-I", "-L", "-F", "-iquote", "-isystem"}
-)
-
-// options transforms package-relative paths in cgo options into repository-
-// root-relative paths that Bazel can understand. For example, if a cgo file
-// in //foo declares an include flag in its copts: "-Ibar", this method
-// will transform that flag into "-Ifoo/bar".
-func (g *Generator) options(opts packages.PlatformStrings, pkgRel string) packages.PlatformStrings {
-	fixPath := func(opt string) string {
-		if strings.HasPrefix(opt, "/") {
-			return opt
-		}
-		return path.Clean(path.Join(pkgRel, opt))
-	}
-
-	fixOpts := func(opts []string) ([]string, error) {
-		fixedOpts := make([]string, len(opts))
-		isPath := false
-		for i, opt := range opts {
-			if isPath {
-				opt = fixPath(opt)
-				isPath = false
-				goto next
-			}
-
-			for _, short := range shortOptPrefixes {
-				if strings.HasPrefix(opt, short) && len(opt) > len(short) {
-					opt = short + fixPath(opt[len(short):])
-					goto next
-				}
-			}
-
-			for _, long := range longOptPrefixes {
-				if opt == long {
-					isPath = true
-					goto next
-				}
-			}
-
-		next:
-			fixedOpts[i] = opt
-		}
-
-		return packages.JoinOptions(fixedOpts), nil
-	}
-
-	opts, errs := opts.MapSlice(fixOpts)
-	if errs != nil {
-		log.Panicf("unexpected error when transforming options with pkg %q: %v", pkgRel, errs)
-	}
-	return opts
 }
 
 func isEmpty(r bf.Expr) bool {
