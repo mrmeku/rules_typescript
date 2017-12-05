@@ -2,16 +2,23 @@
     "name": "@bazel/typescript",
     "description": "Build TypeScript with Bazel",
     "version": "0.5.0",
-    "keywords": ["typescript", "bazel"],
+    "keywords": [
+        "typescript",
+        "bazel"
+    ],
     "homepage": "https://github.com/bazelbuild/rules_typescript",
     "license": "Apache-2.0",
     "dependencies": {
+        "@angular/compiler": "git+https://github.com/angular/compiler-builds.git#19b350049d1ead215880d0fe3b3fe89f7baa03b1",
+        "@angular/compiler-cli": "git+https://github.com/angular/compiler-cli-builds.git#b4d97b8e978c6e9b3007e5ed369be4da50f3900f",
+        "@angular/core": "git+https://github.com/angular/core-builds.git#5756a3175471eb5b36657091d41cb387b1117706",
+        "@angular/platform-browser": "git+https://github.com/angular/platform-browser-builds.git#9bccadc975a60c26fe7e6c494380ac7cc4529083",
         "@types/node": "7.0.18",
         "@types/source-map": "^0.5.1",
         "protobufjs": "5.0.0",
         "tsickle": "0.25.x",
-        "typescript": "2.5.x",
-        "tsutils": "2.12.1"
+        "tsutils": "2.12.1",
+        "typescript": "2.5.x"
     },
     "devDependencies": {
         "@types/jasmine": "^2.8.2",

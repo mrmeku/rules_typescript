@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as tsickle from 'tsickle';
 import * as ts from 'typescript';
 
 import {PLUGIN as tsetsePlugin} from '../tsetse/runner';
@@ -25,9 +26,9 @@ export function main(args: string[]) {
     if (!runOneBuild(args)) {
       return 1;
     }
-  }
+    }
   return 0;
-}
+  }
 
 // The one FileCache instance used in this process.
 const fileCache = new FileCache<ts.SourceFile>(debug);
@@ -54,12 +55,12 @@ function runOneBuild(
     fileCache.updateCache(resolvedInputs);
   } else {
     fileLoader = new UncachedFileLoader();
-  }
+    }
 
   if (args.length !== 1) {
     console.error('Expected one argument: path to tsconfig.json');
     return false;
-  }
+    }
   // Strip leading at-signs, used in build_defs.bzl to indicate a params file
   const tsconfigFile = args[0].replace(/^@+/, '');
 
@@ -67,11 +68,11 @@ function runOneBuild(
   if (errors) {
     console.error(diagnostics.format(target, errors));
     return false;
-  }
+    }
   if (!parsed) {
     throw new Error(
         'Impossible state: if parseTsconfig returns no errors, then parsed should be non-null');
-  }
+    }
   const {options, bazelOpts, files} = parsed;
   const compilerHostDelegate =
       ts.createCompilerHost({target: ts.ScriptTarget.ES5});
@@ -83,14 +84,14 @@ function runOneBuild(
     (compilerHost as ts.CompilerHost).directoryExists =
         (directoryName: string) =>
             compilerHostDelegate.directoryExists!(directoryName);
-  }
+    }
   let program = ts.createProgram(files, options, compilerHost);
 
   fileCache.traceStats();
 
   function isCompilationTarget(sf: ts.SourceFile): boolean {
     return (bazelOpts.compilationTargetSrc.indexOf(sf.fileName) !== -1);
-  }
+    }
   let diags: ts.Diagnostic[] = [];
   // Install extra diagnostic plugins
   if (!bazelOpts.disableStrictDeps) {
@@ -132,7 +133,26 @@ function runOneBuild(
   if (diags.length > 0) {
     console.error(diagnostics.format(bazelOpts.target, diags));
     return false;
-  }
+    }
+
+  const emitResults: tsickle.EmitResult[] =
+      program.getSourceFiles()
+          .filter(isCompilationTarget)
+          .map(
+              file => tsickle.emitWithTsickle(
+                  program, compilerHost, (compilerHost as ts.CompilerHost),
+                  options, file));
+
+  const emitResult = tsickle.mergeEmitResults(emitResults);
+
+  let externs = '/** @externs */';
+  if (bazelOpts.tsickleGenerateExterns) {
+    externs += tsickle.getGeneratedExterns(emitResult.externs);
+    }
+
+  if (bazelOpts.tsickleExternsPath) {
+    fs.writeFileSync(bazelOpts.tsickleExternsPath, externs);
+    }
 
   for (const sf of program.getSourceFiles().filter(isCompilationTarget)) {
     const emitResult = program.emit(
@@ -142,13 +162,13 @@ function runOneBuild(
               (sf: ts.SourceFile) => compilerHost.amdModuleName(sf))]
         });
     diags.push(...emitResult.diagnostics);
-  }
+    }
   if (diags.length > 0) {
     console.error(diagnostics.format(bazelOpts.target, diags));
     return false;
-  }
+    }
   return true;
-}
+  }
 
 if (require.main === module) {
   process.exitCode = main(process.argv.slice(2));
