@@ -1,0 +1,51 @@
+---
+platforms:
+  ubuntu1404:
+    run_targets:
+    - "//:gazelle"
+    - "@nodejs//:yarn"
+    build_targets:
+    - "..."
+    test_flags:
+    # TODO(gregmagolan): shared libs needed by chrome & firefox not available on ubuntu1404
+    - "--test_tag_filters=-browser:chromium-local,-browser:firefox-local"
+    test_targets:
+    - "..."
+  ubuntu1604:
+    run_targets:
+    - "//:gazelle"
+    - "@nodejs//:yarn"
+    build_targets:
+    - "..."
+    # Run some targets again, but addressed as an external repo
+    # TODO(alexeagle): run all of them after fixing https://github.com/bazelbuild/rules_typescript/issues/243
+    - "@npm_bazel_typescript//examples/some_library:lib"
+    test_flags:
+    # TODO(gregmagolan): shared libs needed by chrome & firefox not available on ubuntu1604
+    - "--test_tag_filters=-browser:chromium-local,-browser:firefox-local"
+    test_targets:
+    - "..."
+  macos:
+    run_targets:
+    - "//:gazelle"
+    - "@nodejs//:yarn"
+    build_targets:
+    - "..."
+    test_flags:
+    # TODO(gregmagolan): chrome & firefox unknown breakage on macos target here; does work locally on mac
+    - "--test_tag_filters=-browser:chromium-local,-browser:firefox-local"
+    test_targets:
+    - "..."
+  windows:
+    run_targets:
+    - "//:gazelle"
+    - "@nodejs//:yarn"
+    build_flags:
+    - "--action_env=PATH"
+    build_targets:
+    - "..."
+    test_flags:
+    - "--action_env=PATH"
+    - "--test_env=PATH"
+    test_targets:
+    - "..."

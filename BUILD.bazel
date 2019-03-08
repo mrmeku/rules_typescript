@@ -1,0 +1,80 @@
+# Copyright 2017 The Bazel Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# To update BUILD.bazel files after changing Go code, run
+# bazel run //:gazelle
+#
+# Exclude node_modules, see
+# https://github.com/bazelbuild/rules_go/blob/master/go/tools/gazelle/README.rst#directives
+# gazelle:exclude node_modules
+load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@build_bazel_rules_nodejs//:defs.bzl", "npm_package")
+load("@build_bazel_rules_nodejs//internal/js_library:js_library.bzl", "js_library")
+
+# ts_library defaults to this label in the top-level package.
+# Point to where the file actually lives.
+alias(
+    name = "tsconfig.json",
+    actual = "//examples:tsconfig.json",
+    visibility = ["//visibility:public"],
+)
+
+exports_files(["LICENSE"])
+
+gazelle(
+    name = "gazelle",
+    prefix = "github.com/bazelbuild/rules_typescript",
+)
+
+# Runtime libraries needed by the protobufjs library.
+# Any JS code produced by the ts_proto_library rule has a runtime dependency on these scripts.
+js_library(
+    name = "protobufjs_bootstrap_scripts",
+    srcs = [
+        "@build_bazel_rules_typescript_protobufs_compiletime_deps//node_modules/long:dist/long.js",
+        "@build_bazel_rules_typescript_protobufs_compiletime_deps//node_modules/protobufjs:dist/minimal/protobuf.min.js",
+    ],
+    # Make devmode loading work when it does require("protobufjs/minimal")
+    # so this is shimmed to define it to equal global.protobuf
+    amd_names = {
+        "long": "Long",
+        "protobufjs/minimal": "protobuf",
+    },
+    visibility = ["//visibility:public"],
+)
+
+
+# This package is included in the npm_bazel_typescript package in rules_nodejs/packages/typescript
+npm_package(
+    name = "npm_bazel_typescript_package",
+    srcs = [
+        "//devserver:npm_package_assets",
+        "//third_party/github.com/bazelbuild/bazel/src/main/protobuf:npm_package_assets",
+        "//internal:common/compilation.bzl",
+        "//internal:common/json_marshal.bzl",
+        "//internal:common/module_mappings.bzl",
+        "//internal:common/tsconfig.bzl",
+    ],
+    deps = [
+        "//internal:generated_BUILD",
+        "//internal:tsc_wrapped",
+        "//devserver:devserver-darwin",
+        "//devserver:devserver-linux",
+        "//devserver:devserver-windows",
+        "//ts_auto_deps:ts_auto_deps-darwin",
+        "//ts_auto_deps:ts_auto_deps-linux",
+        "//ts_auto_deps:ts_auto_deps-windows",
+    ],
+    visibility = ["//visibility:public"],
+)
