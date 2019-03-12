@@ -261,7 +261,7 @@ ts_library = rule(
     attrs = dict(COMMON_ATTRIBUTES, **{
         "srcs": attr.label_list(
             doc = "The TypeScript source files to compile.",
-            allow_files = [".ts", ".tsx"],
+            allow_files = True,
             mandatory = True,
         ),
         "compile_angular_templates": attr.bool(

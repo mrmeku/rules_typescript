@@ -1,5 +1,5 @@
 load("//internal:defaults.bzl", "ts_library")
-
+load("//examples/generated_ts:defs.bzl", "proto_swagger_gen")
 package(default_visibility = ["//visibility:public"])
 
 genrule(
@@ -8,7 +8,21 @@ genrule(
     cmd = "echo 'export const a = 1;' > $@",
 )
 
+proto_swagger_gen(
+    name = "stuff",
+    proto = "stuff_service.proto",
+)
+
 ts_library(
-    name = "generated_ts",
-    srcs = [":foo.ts"],
+    name = "stuff_angular_ts_library",
+    srcs = [":stuff_angular"],
+    # Allow this library to be imported from `some-lib`
+    module_name = "stuff-angular-ts-library",
+    # The imported path should be the library.d.ts file
+    module_root = "stuff_angular/index.ts",
+)
+
+ts_library(
+    name = "consume_stuff_angular_ts_library",
+    srcs = ["consume-stuff-angular-ts-library.ts"],
 )

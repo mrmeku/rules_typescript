@@ -14,6 +14,24 @@
 
 workspace(name = "npm_bazel_typescript")
 
+# This rule is built-into Bazel but we need to load it first to download more rules
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
+
+# Rules for translating protocol buffers to swagger definitions
+http_archive(
+    name = "grpc_ecosystem_grpc_gateway",
+    sha256 = "8b7afdfb6866c3f4d7630095fba1e7e7ff9b57491a5963d144ac58a9cc7dffa8",
+    strip_prefix = "grpc-gateway-1.7.0",
+    url = "https://github.com/grpc-ecosystem/grpc-gateway/archive/v1.7.0.zip",
+)
+
+# Swagger Code Gen Jar for producing Angular HTTP Services
+http_jar(
+    name = "io_swagger_swagger_codegen_cli",
+    url = "https://oss.sonatype.org/content/repositories/snapshots/io/swagger/swagger-codegen-cli/3.0.0-SNAPSHOT/swagger-codegen-cli-3.0.0-20180710.190537-87.jar",
+)
+
+
 # Load nested npm_bazel_karma repository
 local_repository(
     name = "npm_bazel_karma",
@@ -94,4 +112,32 @@ browser_repositories()
 local_repository(
     name = "devserver_test_workspace",
     path = "devserver/devserver/test/test-workspace",
+)
+
+load("@bazel_gazelle//:deps.bzl", "go_repository")
+
+
+# Rules for invoking the swagger code generator
+local_repository(
+    name = "io_bazel_rules_openapi",
+    path = "/home/mrmeku/workspaces/rules_openapi",
+)
+
+load("@io_bazel_rules_openapi//openapi:openapi.bzl", "openapi_repositories")
+
+openapi_repositories(
+    swagger_codegen_cli_sha1 = "805ebb3000a0bbdedc99bb80860148c629b6c80c",
+    swagger_codegen_cli_version = "2.4.2",
+)
+
+go_repository(
+    name = "com_github_ghodss_yaml",
+    commit = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7",
+    importpath = "github.com/ghodss/yaml",
+)
+
+go_repository(
+    name = "in_gopkg_yaml_v2",
+    commit = "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+    importpath = "gopkg.in/yaml.v2",
 )

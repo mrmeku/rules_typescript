@@ -363,8 +363,13 @@ export class CachedFileLoader implements FileLoader {
     let sourceFile = this.cache.getCache(filePath);
     if (!sourceFile) {
       const readStart = Date.now();
-      const sourceText = fs.readFileSync(filePath, 'utf8');
-      sourceFile = ts.createSourceFile(fileName, sourceText, langVer, true);
+      try {
+        const sourceText = fs.readFileSync(filePath, 'utf8');
+        sourceFile = ts.createSourceFile(fileName, sourceText, langVer, true);
+      } catch (e) {
+        const sourceText = fs.readFileSync(filePath.replace('.ts', '/index.ts'), 'utf8');
+        sourceFile = ts.createSourceFile(fileName, sourceText, langVer, true);
+      }
       const entry = {
         digest: this.cache.getLastDigest(filePath),
         value: sourceFile

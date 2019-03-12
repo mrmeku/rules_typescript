@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package proto_swagger_gen.api;
+
+import "google/api/annotations.proto";
+
+service StuffService {
+  rpc GetStuff(GetStuffRequest) returns (GetStuffResponse) {
+    option (google.api.http) = {
+      post : "/some_url/endpoint",
+      body : "*"
+    };
+  }
+}
+
+message GetStuffRequest {}
+
+message GetStuffResponse {
+  int32 status = 1;
+}
+
